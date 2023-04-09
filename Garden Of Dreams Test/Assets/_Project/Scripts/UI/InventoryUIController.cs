@@ -7,7 +7,11 @@ using UnityEngine.UI;
 
 public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
 {
-    [SerializeField] GameObject[] _prefabs;
+    GameObject[][] _prefabs;
+    [SerializeField] GameObject[] _ammoPre;
+    [SerializeField] GameObject[] _weaponPre;
+    [SerializeField] GameObject[] _bodyPre;
+    [SerializeField] GameObject[] _headPre;
     [SerializeField] BuyingSlot _slotBuyer;
     [SerializeField] string _targetName;
     [SerializeField] GraphicRaycaster _raycaster;
@@ -21,6 +25,14 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
     Transform _draggedObject;
     bool _stopCoroutine;
 
+    private void Awake()
+    {
+        _prefabs = new GameObject[4][];
+        _prefabs[0] = _ammoPre;
+        _prefabs[1] = _weaponPre;
+        _prefabs[2] = _bodyPre;
+        _prefabs[3] = _headPre;
+    }
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -67,10 +79,9 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
     internal void UpdateUI(Slot slotData, int slotId)
     {
         try { Destroy(_gridBox.GetChild(slotId).GetChild(1).gameObject); } catch { }
-        Debug.Log("Item Slot ID" + slotId);
-        if (slotData.ID > 0)
+        if (slotData.TypeID+slotData.ID != 0 )
         {
-            GameObject gameObject = Instantiate(_prefabs[slotData.ID], _gridBox.GetChild(slotId));
+            GameObject gameObject = Instantiate(_prefabs[slotData.TypeID][slotData.ID], _gridBox.GetChild(slotId));
             gameObject.GetComponent<UIItemCounterController>().ChangeItemQuantity(slotData.Quantity);
         }
     }

@@ -4,6 +4,7 @@ public class UIController : MonoBehaviour
 {
     [SerializeField] GameObject _errorPanel;
     [SerializeField] GameCoreController _game;
+    
 
     public void Error(string message)
     {

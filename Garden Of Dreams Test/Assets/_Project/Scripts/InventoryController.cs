@@ -3,20 +3,29 @@ using UnityEngine;
 
 public class InventoryController : MonoBehaviour
 {
-    [SerializeField] string[] _itemnames;
+    string[][] _itemNames;
+    [SerializeField] string[] _ammoNames;
+    [SerializeField] string[] _weaponNames;
+    [SerializeField] string[] _bodyNames;
+    [SerializeField] string[] _headNames;
+
     [SerializeField] GameCoreController _game;
     Slot[] _slots = new Slot[30];
 
     public int ActiveSlotNumber { get; private set; } = 0;
     const string _filename = "/inventory.dat";
 
-    private void Awake()
+    private void Start()
     {
+        _itemNames = new string[4][];
+        _itemNames[0] = _ammoNames;
+        _itemNames[1] = _weaponNames;
+        _itemNames[2] = _bodyNames;
+        _itemNames[3] = _headNames;
         if (SaveHandler.Load(Application.persistentDataPath + _filename, out InventoryDataCollector save))
         {
             _slots = save.GetSlotData();
             ActiveSlotNumber = save.GetSlotNumber();
-            Debug.Log("Number "+ActiveSlotNumber);
             for (int i = 0; i < ActiveSlotNumber; i++)
             {
                 _game.OpenUISlot();
@@ -25,10 +34,14 @@ public class InventoryController : MonoBehaviour
         }
         else for (int i = 0; i < 15; i++) OpenSlot();
     }
-    
+
     public void SlotInteraction(int transmitter, int receiver)
     {
-        if (_slots[transmitter].ID == _slots[receiver].ID) slotTransfer(transmitter, receiver);
+        //No && to prevent excess copmaration in cause of type already mismatch.
+        if (_slots[transmitter].TypeID == _slots[receiver].TypeID)
+        {
+            if (_slots[transmitter].ID == _slots[receiver].ID) slotTransfer(transmitter, receiver);
+        }
         else slotSwap(transmitter, receiver);
     }
 
@@ -62,14 +75,19 @@ public class InventoryController : MonoBehaviour
     }
 
     //========================================================
-    private bool AddItem(int quanity, string itemName, int limit, int id, float extra1, float extra2, float extra3)
+
+    private bool AddItem(int typeId, int id, string itemName, int quanity, int limit, float extra1, float extra2, float extra3)
     {
+        //Preferables:
+        //Extra1 - mass.
+        //Extra2 - damage/damage negation.
+        //Extra3 - free, m.b. durability
+        if (quanity == -1) quanity = limit;
         for (int i = 0; i < ActiveSlotNumber; i++)
         {
             if (_slots[i].ID == 0)
             {
-                Debug.Log("Active Slot Number" + ActiveSlotNumber);
-                _slots[i] = new Slot(quanity, itemName, limit, id, extra1, extra2, extra3);
+                _slots[i] = new Slot(typeId, id, itemName, quanity, limit, extra1, extra2, extra3);
                 _game.UpdateInvUI(_slots[i], i);
                 return true;
             }
@@ -77,32 +95,31 @@ public class InventoryController : MonoBehaviour
         return false;
     }
 
-    //Переделать систему располжения предметов, разбить на отдельные массивы по типам и запихнуть их все в массив типов.
-    public bool AddAmmo(int ammoType)
+    //если успею, пропишу вытаскивание значений из настраиваемой через инспектор базы предметов. Чтобы геймдизам не приходилось залезать в код.
+    public bool AddItem(int typeId, int id, int quantity = -1)
     {
-        if (ammoType == 1) return AddItem(100, _itemnames[1], 100, 1, 0.01f, 0f, 0f);
-        else if (ammoType == 2) return AddItem(300, _itemnames[2], 300, 2, 0.01f, 0f, 0f);
+        if (typeId == 0)
+        {
+            if (id == 1) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 100, 0.01f, 0f, 0f);
+            if (id == 2) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 300, 0.01f, 0f, 0f);
+        }
+        if (typeId == 1)
+        {
+            if (id == 1) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 2, 1f, 10f, 0f);
+            if (id == 2) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 1, 5f, 20f, 0f);
+        }
+        if (typeId == 2)
+        {
+            if (id == 1) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 1, 10f, 3f, 0f);
+            if (id == 2) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 1, 10f, 10f, 0f);
+        }
+        if (typeId == 3)
+        {
+            if (id == 1) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 1, 0.01f, 3f, 0f);
+            if (id == 2) return AddItem(typeId, id, _itemNames[typeId][id], quantity, 1, 1f, 10f, 0f);
+        }
         return false;
     }
-    public bool AddWeapon(int weaponType)
-    {
-        if (weaponType == 1) return AddItem(1, _itemnames[3], 1, 3, 1f, 10f, 0f);
-        else if (weaponType == 2) return AddItem(1, _itemnames[4], 1, 4, 5f, 20f, 0f);
-        return false;
-    }
-    public bool AddBodyArmor(int armorType)
-    {
-        if (armorType == 1) return AddItem(1, _itemnames[5], 1, 5, 10f, 3f, 0f);
-        else if (armorType == 2) return AddItem(1, _itemnames[6], 1, 6, 10f, 10f, 0f);
-        return false;
-    }
-    public bool AddHeadArmor(int armorType)
-    {
-        if (armorType == 1) return AddItem(1, _itemnames[7], 1, 7, 0.01f, 3f, 0f);
-        else if (armorType == 2) return AddItem(1, _itemnames[8], 1, 8, 1f, 10f, 0f);
-        return false;
-    }
-
     //========================================================
     public bool ClearItemSlot(int number)
     {
@@ -126,17 +143,18 @@ public class InventoryController : MonoBehaviour
     //========================================================
     public bool SpendAmmo(int type)
     {
-        //в силу совпадения данных излишне, но остается на случай изменения слотов, чтобы помнить про необходимость поддерживать соответствие.
-        if (type == 1) type = 1;
-        else if (type == 2) type = 2;
         for (int i = ActiveSlotNumber - 1; i >= 0; i--)
         {
-            if (_slots[i].ID == type)
+            if (_slots[i].TypeID == 0)
             {
-                _slots[i].DecreaseQuantity(1);
-                _game.UpdateInvUI(_slots[i], i);
-                return true;
+                if (_slots[i].ID == type)
+                {
+                    _slots[i].DecreaseQuantity(1);
+                    _game.UpdateInvUI(_slots[i], i);
+                    return true;
+                }
             }
+
         }
         return false;
     }

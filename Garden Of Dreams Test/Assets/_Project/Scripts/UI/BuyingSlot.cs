@@ -12,7 +12,6 @@ public class BuyingSlot : MonoBehaviour, IPointerClickHandler
     [SerializeField] GraphicRaycaster _raycaster;
     [SerializeField] EventSystem _eventSystem;
     [SerializeField] TextMeshProUGUI _text;
-    
     public void OnPointerClick(PointerEventData eventData)
     {
         List<RaycastResult> results = new List<RaycastResult>();
