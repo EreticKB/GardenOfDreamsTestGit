@@ -40,9 +40,13 @@ public class InventoryController : MonoBehaviour
         //No && to prevent excess copmaration in cause of type already mismatch.
         if (_slots[transmitter].TypeID == _slots[receiver].TypeID)
         {
-            if (_slots[transmitter].ID == _slots[receiver].ID) slotTransfer(transmitter, receiver);
+            if (_slots[transmitter].ID == _slots[receiver].ID)
+            {
+                slotTransfer(transmitter, receiver);
+                return;
+            }
         }
-        else slotSwap(transmitter, receiver);
+        slotSwap(transmitter, receiver);
     }
 
     private void slotSwap(int transmitter, int receiver)

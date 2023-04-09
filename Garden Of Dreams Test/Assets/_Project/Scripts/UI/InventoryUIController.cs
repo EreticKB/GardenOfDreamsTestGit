@@ -98,7 +98,7 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
     IEnumerator Timer()
     {
         _stopCoroutine = false;
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.25f);
         if (_stopCoroutine)
         {
             _draggedObject = null;
