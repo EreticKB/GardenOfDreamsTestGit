@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
 {
     [SerializeField] GameObject[] _prefabs;
-    [SerializeField] string[] _itemnames;
+    [SerializeField] BuyingSlot _slotBuyer;
     [SerializeField] string _targetName;
     [SerializeField] GraphicRaycaster _raycaster;
     [SerializeField] EventSystem _eventSystem;
@@ -44,7 +44,7 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
         {
             if (_draggedObject == null) return;
             StopCoroutine("Timer");
-            _scroll.horizontal = true;
+            _scroll.vertical = true;
             _draggedObject.SetParent(_transmitter);
             _draggedObject.localPosition = Vector2.zero;
             _draggedObject = null;
@@ -54,15 +54,11 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
             _raycaster.Raycast(_pointerEventData, results);
             if (!results[0].gameObject.name.Equals(_targetName)) return;
             _receiver = results[0].gameObject.transform.parent;
-            if (_transmitter == _receiver)
-            {
-                Debug.Log("Polozhili na mesto");
-                return;
-            }
-            Debug.Log("Transfer");
+            if (_transmitter == _receiver) return;
             _game.UpdateInventory(_transmitter.GetSiblingIndex(), _receiver.GetSiblingIndex());
         }
     }
+
     public void OnPointerMove(PointerEventData eventData) //возможно понадобится другой перехватчик, скажем Move
     {
         _stopCoroutine = true;
@@ -71,11 +67,21 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
     internal void UpdateUI(Slot slotData, int slotId)
     {
         try { Destroy(_gridBox.GetChild(slotId).GetChild(1).gameObject); } catch { }
+        Debug.Log("Item Slot ID" + slotId);
         if (slotData.ID > 0)
         {
             GameObject gameObject = Instantiate(_prefabs[slotData.ID], _gridBox.GetChild(slotId));
             gameObject.GetComponent<UIItemCounterController>().ChangeItemQuantity(slotData.Quantity);
         }
+    }
+
+    internal void OpenSlot()
+    {
+        _game.OpenSlot();
+    }
+    internal void OpenUISlot()
+    {
+        _slotBuyer.OpenUISlot();
     }
 
     IEnumerator Timer()
@@ -88,7 +94,7 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
             yield break;
         }
         _draggedObject.SetParent(transform);
-        _scroll.horizontal = false;
+        _scroll.vertical = false;
         while (true)
         {
             yield return new WaitForEndOfFrame();
@@ -96,8 +102,5 @@ public class InventoryUIController : MonoBehaviour, IPointerMoveHandler
         }
     }
 
-    public string GetItemName(int id)
-    {
-        return _itemnames[id];
-    }
+
 }

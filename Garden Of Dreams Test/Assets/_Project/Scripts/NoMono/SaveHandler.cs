@@ -28,10 +28,7 @@ public static class SaveHandler
 
     public static void Save(InventoryDataCollector file, string filename)
     {
-        Console.WriteLine("here");
         File.WriteAllText(filename, SerializeObject(file));
-
-        Console.WriteLine("her");
     }
 
     public static bool Load(string filename, out InventoryDataCollector data)
