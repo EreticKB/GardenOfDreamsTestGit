@@ -41,8 +41,8 @@ public class GameCoreController : MonoBehaviour
     internal bool AddAmmo()
     {
         _sound.SpawnAmmoSound();
-        if (!_inventory.AddItem(0, Random.Range(1, 3), -1)) return false;
-        if (!_inventory.AddItem(0, Random.Range(1, 3), -1)) return false;
+        if (!_inventory.AddItem(0, 1, -1)) return false;
+        if (!_inventory.AddItem(0, 2, -1)) return false;
         return true;
     }
 

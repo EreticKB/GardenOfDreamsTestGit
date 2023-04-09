@@ -23,8 +23,7 @@ public class UIController : MonoBehaviour
     }
     public void ShotButtonHandler()
     {
-        if (_game.Shot()) ; //вставить звук выстрела
-        else; //вставить звук клацания
+        _game.Shot();
     }
     public void ClearButtonHandler()
     {
